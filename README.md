@@ -1,2 +1,2 @@
-# Everson_de-Haro_Torres-TDR_Assist-ncia_Diagn-stica_amb_IA-_Un_Model_de_Predicci--2026
+# Everson_de Haro_Torres-TDR_Assistència_Diagnòstica_amb_IA:_Un_Model_de_Predicció-2026
 En aquest treball de recerca es planteja la idea de desenvolupar un sistema d'IA per analitzar imatges mèdiques i predir tumors cerebrals. Es va crear un prototip amb Teachable Machine i una aplicació web amb Visual Studio Code, permetent carregar imatges i obtenir prediccions automàtiques, demostrant el suport que pot oferir en decisions mèdiques.
