@@ -24,7 +24,7 @@
 
         /* Estilos para el logo superior izquierdo, solo es decorativo */
         .top-left-logo {
-            position: absolute; /* Posicionamiento absoluto, se sitúa con respecto al elemento padre más cercano (o al body) */
+            position: absolute; /* Posicionamiento absoluto, se sitúa con respecto al elemento importante más cercano (o al body) */
             top: 20px; /* Lo coloca a 20 píxeles desde la parte superior */
             left: 20px; /* Lo coloca a 20 píxeles desde la parte izquierda */
             width: 150px; /* Define el ancho de la imagen */
@@ -192,7 +192,7 @@
             updateUI(); // Llama a la función para actualizar la interfaz gráfica
         }
 
-        // Función para actualizar la interfaz de usuario (UI) según el estado actual
+        // Función para actualizar la interfaz de usuario según el estado actual
         function updateUI() {
             switch (appState) { // Inicia una estructura de control 'switch'
                 case 'loading': // Si el estado es 'loading' (cargando el modelo)
