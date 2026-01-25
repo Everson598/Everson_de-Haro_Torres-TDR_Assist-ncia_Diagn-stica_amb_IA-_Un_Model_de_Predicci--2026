@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <title>ImageAI Med</title>
+    <link rel="icon" type="image/png" href="Logotip.png">
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+<style>
+        /* Estilos generales para el cuerpo de la página */
+        body {
+            font-family: sans-serif; /* Define la fuente de texto */
+            display: flex; /* Utiliza el modelo de caja flexible (Flexbox) */
+            flex-direction: column; /* Organiza los elementos en una columna */
+            align-items: center; /* Centra los elementos horizontalmente */
+            padding: 20px; /* Añade un espacio de 20px alrededor del contenido */
+            background-color: #ffffff; /* Define el color de fondo */
+            color: #333; /* Define el color de la fuente */
+            min-height: 100vh; /* Asegura que el cuerpo ocupe al menos la altura completa de la ventana */
+            margin: 0; /* Elimina los márgenes predeterminados del navegador */
+            text-align: center; /* Centra el texto dentro de los elementos */
+            transition: opacity 0.5s ease-in-out; /* Aplica una transición suave a los cambios de opacidad */
+        }
+
+        /* Estilos para el logo superior izquierdo, solo es decorativo */
+        .top-left-logo {
+            position: absolute; /* Posicionamiento absoluto, se sitúa con respecto al elemento importante más cercano (o al body) */
+            top: 20px; /* Lo coloca a 20 píxeles desde la parte superior */
+            left: 20px; /* Lo coloca a 20 píxeles desde la parte izquierda */
+            width: 150px; /* Define el ancho de la imagen */
+            z-index: 100; /* Lo coloca en una capa superior a otros elementos */
+        }
+
+        /* Contenedor principal para el texto de bienvenida */
+        .container {
+            max-width: 800px; /* El ancho máximo es de 800 píxeles */
+            margin: 0 auto; /* Centra el contenedor horizontalmente */
+            padding: 0 20px; /* Añade un espacio de 20px a los lados */
+            line-height: 1.6; /* Establece el interlineado del texto */
+            animation: fadeIn 2s; /* Aplica la animación 'fadeIn' durante 2 segundos */
+        }
+
+        /* Estilos de la interfaz de la IA (única pantalla) */
+        #main-interface {
+            width: 100%; /* Ocupa todo el ancho disponible */
+            display: flex; /* Utiliza Flexbox para la disposición */
+            flex-direction: column; /* Organiza los elementos internos en una columna */
+            align-items: center; /* Centra los elementos horizontalmente */
+            justify-content: center; /* Centra los elementos verticalmente */
+        }
+
+        /* Estilos para las tarjetas que muestran la imagen y los resultados */
+        .image-card {
+            border: 1px solid #ffffff; /* Borde con un color blanco */
+            padding: 20px; /* Espaciado interno */
+            margin: 15px; /* Marge exterior */
+            border-radius: 8px; /* Redondea los bordes */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.08); /* Añade un efecto de sombra */
+            display: inline-block; /* Permite que las tarjetas se sitúen en línea */
+            vertical-align: top; /* Alinea las tarjetas en la parte superior */
+            width: 250px; /* Define un ancho fijo para cada tarjeta */
+            text-align: center; /* Centra el texto dentro de la tarjeta */
+            transition: transform 0.3s ease-in-out; /* Transición suave para el efecto de movimiento */
+        }
+
+        /* Efecto al pasar el mouse sobre la tarjeta */
+        .image-card:hover {
+            transform: translateY(-5px); /* Mueve la tarjeta 5 píxeles hacia arriba */
+        }
+            
+        /* Estilos para las imágenes dentro de las tarjetas */
+        .image-card img {
+            max-width: 100%; /* Asegura que la imagen no exceda el ancho de la tarjeta */
+            height: auto; /* Mantiene la proporción de la imagen */
+            border-radius: 4px; /* Redondea los bordes de la imagen */
+            margin-bottom: 15px; /* Margen inferior para separarla del texto */
+        }
+
+        /* Estilos para los textos de probabilidad dentro de la tarjeta */
+        #label-container div {
+            margin-top: 5px; /* Margen superior para separarlo de la imagen */
+            font-size: 1.1em; /* Tamaño de la fuente */
+            font-weight: 500; /* Grosor de la fuente */
+        }
+        
+        /* Estilos para el mensaje de carga */
+        #loading-message {
+            font-size: 1em; /* Tamaño de la fuente */
+            color: #555; /* Color del texto */
+            display: none; /* Oculta el mensaje por defecto */
+        }
+        
+        /* Contenedor de los botones */
+        #controls-container {
+            margin-top: 30px; /* Margen superior para separarlo del texto principal */
+            display: flex; /* Usa Flexbox */
+            flex-direction: column; /* Organiza los elementos internos en columna */
+            align-items: center; /* Centra los elementos horizontalmente */
+        }
+
+        /* Estilos para el botón de "Pujar Imatges" (subir imágenes) */
+        .custom-file-upload {
+            background-color: #007BFF; /* Color de fondo azul */
+            color: white; /* Color del texto blanco */
+            padding: 10px 20px; /* Espaciado interno */
+            border: none; /* Sin borde */
+            border-radius: 5px; /* Bordes redondeados */
+            cursor: pointer; /* Cambia el cursor para indicar que es clickeable */
+            font-size: 16px; /* Tamaño de la fuente */
+            transition: background-color 0.3s ease; /* Transición suave al cambiar el color de fondo */
+        }
+
+        /* Estilo al pasar el mouse por el botón de subir imágenes */
+        .custom-file-upload:hover {
+            background-color: #0056b3; /* Color de fondo más oscuro al pasar el mouse */
+        }
+
+        /* Estilos para el botón de "Reconèixer Imatges" */
+        #processButton {
+            background-color: #28a745; /* Color de fondo verde */
+            color: white; /* Color del texto blanco */
+            padding: 10px 20px; /* Espaciado interno */
+            border: none; /* Sin borde */
+            border-radius: 5px; /* Bordes redondeados */
+            cursor: pointer; /* Cambia el cursor para indicar que es clickeable */
+            font-size: 16px; /* Tamaño de la fuente */
+            transition: background-color 0.3s ease; /* Transición suave al cambiar el color de fondo */
+        }
+
+        /* Estilo al pasar el mouse por el botón de procesar imágenes */
+        #processButton:hover {
+            background-color: #218838; /* Color de fondo más oscuro al pasar el mouse */
+        }
+        
+        /* Definición de la animación de entrada */
+        @keyframes fadeIn {
+            from { opacity: 0; } /* El estado inicial de la opacidad es 0 (invisible) */
+            to { opacity: 1; } /* El estado final de la opacidad es 1 (totalmente visible) */
+        }
+        
+        /* Espaciado entre botones */
+        #controls .button-container {
+            display: flex; /* Usa Flexbox */
+            flex-direction: row; /* Coloca los elementos en una fila, uno al lado del otro */
+            align-items: center; /* Centra los elementos verticalmente */
+            gap: 10px; /* Añade un espacio de 10 píxeles entre los botones */
+        }
+    </style>
+</head>
+<body>
+    <div id="main-interface">
+        <img src="Logotip.png" alt="Logo de ImageAI Med" class="top-left-logo">
+        <h1> ImageAI Med</h1>
+        <div class="container">
+            <p>Aquesta eina és una solució tecnològica dissenyada per a l'anàlisi i reconeixement d'imatges mèdiques cerebrals. La seva funcionalitat principal es basa en la diferenciació de tres tipus de tumors cerebrals, incloent-hi també la detecció de l'absència de patologia.</p>
+            <p class="container last-paragraph">El sistema proporciona un percentatge de probabilitat per a cada classificació potencial, la qual cosa facilita la identificació de la hipòtesi diagnòstica més plausible. Aquesta aplicació es presenta com una eina de gran valor i suport diagnòstic per a estudiants i professionals que s'inicien en el camp de la radiologia i la neurociència, oferint una guia addicional en el procés de diagnòstic de malalties neurològiques.</p>
+        </div>
+        
+        <div id="controls-container">
+            <div id="controls">
+                <div class="button-container">
+                    <label for="imageUpload" class="custom-file-upload">
+                        Pujar Imatges 📁
+                    </label>
+                    <input type="file" id="imageUpload" accept="image/*" multiple style="display: none;">
+                    <button id="processButton">Reconèixer Imatges</button>
+                </div>
+            </div>
+        </div>
+        <p id="loading-message">Carregant i analitzant imatges...</p>
+        <div id="results-container"></div>
+    </div>
+    
+    <script type="text/javascript">
+        // Inicio del código JavaScript para la funcionalidad de la página.
+        
+        let model, maxPredictions; // Declara las variables que contendrán el modelo y el número de clases
+        const MODEL_PATH = "./tm-my-image-model (1)/"; // Define la ruta relativa a la carpeta del modelo
+
+        // Asigna a variables las pantallas y botones para facilitar su uso
+        const fileInput = document.getElementById('imageUpload'); // Obtiene el elemento de input de archivo
+        const processButton = document.getElementById('processButton'); // Obtiene el botón de procesar imágenes
+        const resultsContainer = document.getElementById('results-container'); // Obtiene el contenedor donde se mostrarán los resultados
+        const loadingMessage = document.getElementById('loading-message'); // Obtiene el mensaje de carga
+
+        // Estado de la aplicación
+        let appState = 'initial'; // Define la variable para el estado, inicia en 'initial'
+
+        // Función para cambiar el estado de la aplicación
+        function setAppState(state) {
+            appState = state; // Asigna el nuevo estado a la variable
+            updateUI(); // Llama a la función para actualizar la interfaz gráfica
+        }
+
+        // Función para actualizar la interfaz de usuario según el estado actual
+        function updateUI() {
+            switch (appState) { // Inicia una estructura de control 'switch'
+                case 'loading': // Si el estado es 'loading' (cargando el modelo)
+                    loadingMessage.style.display = 'block'; // Muestra el mensaje de carga
+                    processButton.textContent = 'Carregant model...'; // Cambia el texto del botón
+                    processButton.disabled = true; // Deshabilita el botón
+                    break; // Termina el caso
+                case 'processing': // Si el estado es 'processing' (procesando las imágenes)
+                    loadingMessage.style.display = 'block'; // Muestra el mensaje de procesamiento
+                    processButton.textContent = 'Processant...'; // Cambia el texto del botón
+                    processButton.disabled = true; // Deshabilita el botón
+                    break; // Termina el caso
+                case 'ready': // Si el estado es 'ready' (listo para usar)
+                    loadingMessage.style.display = 'none'; // Oculta el mensaje de carga
+                    processButton.textContent = 'Reconèixer Imatges'; // Restaura el texto original del botón
+                    processButton.disabled = false; // Habilita el botón
+                    break; // Termina el caso
+                default: // Si el estado es cualquier otro (ej: 'initial' o 'error')
+                    loadingMessage.style.display = 'none'; // Oculta el mensaje de carga
+                    processButton.textContent = 'Reconèixer Imatges'; // Mantiene el texto del botón
+                    processButton.disabled = true; // Deshabilita el botón hasta que el modelo esté listo
+            }
+        }
+        
+        // Función asíncrona para inicializar el modelo de IA
+        async function init() {
+            setAppState('loading'); // Establece el estado a 'loading'
+            const modelURL = MODEL_PATH + "model.json"; // Construye la ruta completa al archivo del modelo
+            const metadataURL = MODEL_PATH + "metadata.json"; // Construye la ruta completa al archivo de metadatos
+
+            try { // Inicia un bloque 'try-catch' para manejar posibles errores
+                model = await tmImage.load(modelURL, metadataURL); // Carga el modelo de forma asíncrona y espera el resultado
+                maxPredictions = model.getTotalClasses(); // Obtiene el número total de clases del modelo
+                console.log("Model carregat amb èxit."); // Muestra un mensaje en la consola del navegador
+                setAppState('ready'); // Si la carga es exitosa, cambia el estado a 'ready'
+            } catch (error) { // Si ocurre un error
+                console.error("Error en carregar el model:", error); // Muestra el error en la consola
+                alert("No es va poder carregar el model. Assegura't que els arxius 'model.json' i 'metadata.json' estiguin a la ruta correcta: " + MODEL_PATH); // Muestra una alerta al usuario
+                setAppState('error'); // Cambia el estado a 'error'
+            }
+        }
+
+        // Se ejecuta cuando la página ha cargado completamente
+        window.onload = () => {
+            init(); // Llama a la función de inicialización del modelo
+            processButton.addEventListener('click', processImages); // Asocia la función 'processImages' al evento 'click' del botón
+        };
+
+        // Función auxiliar para procesar un solo archivo de forma asíncrona
+        function processFile(file) {
+            return new Promise((resolve, reject) => { // Devuelve una nueva Promesa
+                if (!file.type.startsWith('image/')) { // Comprueba si el archivo no es una imagen
+                    alert(`El archivo '${file.name}' no es una imagen. Por favor, sube solo imágenes.`); // Muestra una alerta
+                    resolve(null); // Resuelve la promesa con 'null'
+                    return; // Sale de la función
+                }
+
+                const reader = new FileReader(); // Crea una nueva instancia de FileReader para leer el archivo
+                reader.onload = async (e) => { // Cuando el archivo se carga
+                    const img = new Image(); // Crea un nuevo elemento de imagen HTML
+                    img.onload = async () => { // Cuando la imagen se carga
+                        const canvas = document.createElement('canvas'); // Crea un nuevo elemento canvas
+                        canvas.width = img.width; // Establece el ancho del canvas
+                        canvas.height = img.height; // Establece la altura del canvas
+                        const ctx = canvas.getContext('2d'); // Obtiene el contexto 2D para dibujar en el canvas
+                        ctx.drawImage(img, 0, 0); // Dibuja la imagen en el canvas
+
+                        const prediction = await model.predict(canvas); // Realiza la predicción del modelo y espera el resultado
+                        const sortedPrediction = prediction.sort((a, b) => b.probability - a.probability); // Ordena las predicciones por probabilidad de mayor a menor
+
+                        const imageCard = document.createElement('div'); // Crea un nuevo div para la tarjeta de resultados
+                        imageCard.className = 'image-card'; // Asigna la clase CSS 'image-card'
+                        const imgElement = document.createElement('img'); // Crea un nuevo elemento de imagen
+                        imgElement.src = e.target.result; // Establece la fuente de la imagen al resultado de la lectura del archivo
+                        imageCard.appendChild(imgElement); // Añade la imagen a la tarjeta
+
+                        const fileNameElement = document.createElement('p'); // Crea un nuevo párrafo para el nombre del archivo
+                        fileNameElement.textContent = `Arxiu: ${file.name}`; // Establece el texto del párrafo
+                        imageCard.appendChild(fileNameElement); // Añade el párrafo a la tarjeta
+
+                        const predictionResultsDiv = document.createElement('div'); // Crea un nuevo div para los resultados de la predicción
+                        predictionResultsDiv.className = 'prediction-results'; // Asigna la clase CSS 'prediction-results'
+                        let predictionText = 'Prediccions:<br>'; // Inicia el texto con un encabezado
+                        sortedPrediction.forEach(p => { // Itera sobre cada predicción ordenada
+                            predictionText += `${p.className}: ${(p.probability * 100).toFixed(2)}%<br>`; // Añade la clase y el porcentaje al texto
+                        });
+                        predictionResultsDiv.innerHTML = predictionText; // Inserta el HTML en el div de resultados
+                        imageCard.appendChild(predictionResultsDiv); // Añade el div de resultados a la tarjeta
+                        
+                        resolve(imageCard); // Resuelve la promesa con la tarjeta de imagen
+                    };
+                    img.src = e.target.result; // Establece la fuente de la imagen para que el evento 'onload' se dispare
+                };
+                reader.onerror = reject; // Maneja errores de lectura de archivo
+                reader.readAsDataURL(file); // Inicia la lectura del archivo como una URL de datos
+            });
+        }
+
+        // Función principal para procesar las imágenes seleccionadas
+        async function processImages() {
+            const files = fileInput.files; // Obtiene la lista de archivos seleccionados
+
+            if (files.length === 0) { // Comprueba si no se ha seleccionado ningún archivo
+                alert("Si us plau, selecciona almenys una imatge per reconèixer."); // Muestra una alerta
+                return; // Termina la función
+            }
+            if (!model) { // Comprueba si el modelo no ha sido cargado
+                alert("El model encara no s'ha carregat. Si us plau, espera un moment o recarrega la pàgina."); // Muestra una alerta
+                return; // Termina la función
+            }
+
+            resultsContainer.innerHTML = ''; // Limpia el contenido del contenedor de resultados
+            setAppState('processing'); // Cambia el estado a 'processing'
+
+            const promises = Array.from(files).map(file => processFile(file)); // Crea un array de promesas, una por cada archivo a procesar
+            const cards = await Promise.all(promises); // Espera a que todas las promesas se resuelvan
+
+            cards.forEach(card => { // Itera sobre el array de tarjetas resultantes
+                if (card) { // Si la tarjeta no es nula (es decir, el archivo era una imagen válida)
+                    resultsContainer.appendChild(card); // Añade la tarjeta al contenedor de resultados
+                }
+            });
+
+            setAppState('ready'); // Una vez que todas las imágenes se han procesado, cambia el estado a 'ready'
+        }
+    </script>
+</body>
+</html>
